@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 
+import pandas as pd
 import os
 import dotenv
 import tweepy
 from tweepy import OAuthHandler
+from textblob import TextBlob
+from tweepy import Stream 
+from tweepy.streaming import StreamListener
+import time
 
 
 
@@ -16,23 +21,49 @@ def login_to_twitter():
     access_token = os.getenv("twitter_access_token")
     access_token_secret = os.getenv("twitter_access_token_secret"))
 
-    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+    auth.set_access_token(access_token, access_token_secret)
 
-    api = tweepy.API(auth)
+    api = tweepy.API(auth,wait_on_rate_limit=True)
 
     return api
 
 
-def scrape_tweets(api, keywords):
+def scrape_tweets(api, text_query, count):
 
-    pass
+    tweets = []
+
+    try:
+    # Pulling individual tweets from query
+        for tweet in api.search(q=text_query, count=count):
+
+          # Adding to list that contains all tweets
+          tweets.append((tweet.created_at,tweet.id,tweet.text))
+
+          # Creation of dataframe from tweets list
+          tweetsdf = pd.DataFrame(tweets,columns=['Datetime', 'Tweet Id', 'Text'])
+
+          # Converting dataframe to CSV
+          tweetsdf.to_csv('{}-tweets.csv'.format(text_query)) 
+
+    except BaseException as e:
+        print('failed on_status,',str(e))
+        time.sleep(3)
 
 
-api = login_to_twitter()
 
-test = scrape_tweets(api, ['Mexico', 'United Airlines'])
 
-print(test)
+# api = login_to_twitter()
+
+# test = scrape_tweets(api, ['Mexico', 'United Airlines'])
+
+# print(test)
+
+
+text_query = "Delta Airlines"
+count = 18000
+
+login_to_twitter()
+scrape_tweets(text_query, count)
 
 
 
